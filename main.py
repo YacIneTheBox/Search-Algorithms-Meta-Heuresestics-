@@ -19,15 +19,12 @@ with open('algeria_20_cities_xy.csv', newline='') as csvfile:
     for row in reader:
         
         name,lat,lon,x,y = row
-        city = City(name,lat,lon,x,y)
+        city = City(name,float(lat),float(lon),float(x),float(y))
         cities.append(city)
-        
-for c in cities:
-    print(f"{c.name}: ({c.x},{c.y})")
     
     
 def Random_search(cities,iteration):
-    nbrCities = cities.size()
+    nbrCities = len(cities)
     sCity = "Algiers"
     totalDistance = 0
     shortestDistance = float('inf')
@@ -45,5 +42,6 @@ def Random_search(cities,iteration):
         totalDistance = 0
     return shortestDistance
 
-iteration = 10
+iteration = 1000
 shortestDist = Random_search(cities,iteration)
+print ('The shortest path is : ',shortestDist)
