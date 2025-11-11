@@ -40,13 +40,13 @@ def total_distance(route):
     return dist
 
 
-    
+# defining the random search
 def Random_search(cities,iteration):
-    nbrCities = len(cities)
     sCity = "Algiers"
     totalDistance = 0
     shortestDistance = float('inf')
     clonCities = copy.deepcopy(cities)
+    bestPath = clonCities
          
     for l in range(iteration):
         random.shuffle(clonCities)
@@ -56,11 +56,38 @@ def Random_search(cities,iteration):
         
         if totalDistance < shortestDistance:
             shortestDistance = totalDistance
+            bestPath = clonCities
             
-    return shortestDistance
+    return shortestDistance,bestPath
 
+# calling the random search
 iteration = 1000
-shortestDist = Random_search(cities,iteration)
+
+
+
+# defining the local search 2-OPT
+
+def Local2Opt_search(cities):
+    best = cities
+    improved = True
+    while improved:
+        improved = False
+        best_distance = total_distance(best)
+        for i in range(1,len(cities)-2):
+            for j in range(i+1,len(cities)):
+                if j-i == 1:
+                    continue
+                new_route = best[:i] + best[i:j][::-1] + best[j:]
+                new_distance = total_distance(new_route)
+            
+                if new_distance < best_distance:
+                    best_distance = new_distance
+                    best = new_route
+                    improved=True
+    
+    return best_distance,best
+
+shortestDist,bestPath = Local2Opt_search(cities)
+for i,city in enumerate(bestPath) : print(city.name, end=" . ")
+print("")
 print ('The shortest path is : ',shortestDist)
-
-
