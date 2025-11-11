@@ -22,6 +22,24 @@ with open('algeria_20_cities_xy.csv', newline='') as csvfile:
         city = City(name,float(lat),float(lon),float(x),float(y))
         cities.append(city)
     
+
+def distance(city1, city2):
+    x1 = city1.x
+    y1 = city1.y
+    x2= city2.x
+    y2 = city2.y
+    
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)    
+
+def total_distance(route):
+    dist = 0
+    for i in range(len(route) - 1):
+        dist += distance(route[i], route[i + 1])
+    # Retour à la ville de départ
+    dist += distance(route[-1], route[0])
+    return dist
+
+
     
 def Random_search(cities,iteration):
     nbrCities = len(cities)
@@ -45,3 +63,5 @@ def Random_search(cities,iteration):
 iteration = 1000
 shortestDist = Random_search(cities,iteration)
 print ('The shortest path is : ',shortestDist)
+
+
