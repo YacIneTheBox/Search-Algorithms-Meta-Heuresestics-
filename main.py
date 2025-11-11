@@ -49,15 +49,14 @@ def Random_search(cities,iteration):
     clonCities = copy.deepcopy(cities)
          
     for l in range(iteration):
-        for j in range(nbrCities):
-            random.shuffle(clonCities)
-            index = next(i for i, city in enumerate(clonCities) if city.name == sCity)
-            totalDistance += math.dist([clonCities[index].x,clonCities[index].y],[clonCities[j].x,clonCities[j].y])
+        random.shuffle(clonCities)
+        index = next(i for i, city in enumerate(clonCities) if city.name == sCity)
+        clonCities[0],clonCities[index] = clonCities[index],clonCities[0]    
+        totalDistance = total_distance(clonCities)
         
         if totalDistance < shortestDistance:
             shortestDistance = totalDistance
             
-        totalDistance = 0
     return shortestDistance
 
 iteration = 1000
