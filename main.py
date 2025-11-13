@@ -61,14 +61,24 @@ def Random_search(cities,iteration):
     return shortestDistance,bestPath
 
 # calling the random search
-iteration = 1000
+iteration = 10000
 
 
 
 # defining the local search 2-OPT
 
 def Local2Opt_search(cities):
-    best = cities
+    
+    # shuffle la liste clone
+    sCity = "Algiers"
+    clonCities = copy.deepcopy(cities)
+    random.shuffle(clonCities)
+    index = next(i for i, city in enumerate(clonCities) if city.name == sCity)
+    clonCities[0],clonCities[index] = clonCities[index],clonCities[0]  
+    
+    # executer le reste de la fonction 
+    
+    best = clonCities
     improved = True
     while improved:
         improved = False
@@ -87,7 +97,78 @@ def Local2Opt_search(cities):
     
     return best_distance,best
 
-shortestDist,bestPath = Local2Opt_search(cities)
+
+def HillClimbing(cities):
+    sCity = "Algiers"
+    clonCities = copy.deepcopy(cities)
+    random.shuffle(clonCities)
+    index = next(i for i, city in enumerate(clonCities) if city.name == sCity)
+    clonCities[0],clonCities[index] = clonCities[index],clonCities[0]  
+    best_distance = total_distance(clonCities)
+    
+    improved = True
+    
+    while improved:
+        improved=False
+        for i in range(1,len(clonCities)-2):
+            for j in range(i+1,len(clonCities)):
+                if j-i == 1:
+                    continue
+            
+            voisin = clonCities[:i] + clonCities[i:j][::-1] + clonCities[j:]
+            dist_voisin = total_distance(voisin)
+            if dist_voisin < best_distance:
+                clonCities = voisin
+                best_distance = dist_voisin
+                improved = True
+                break
+        if improved:
+            break
+    
+    return best_distance,clonCities
+
+def PlusProcheVoisin(cities):
+    clonCities = copy.deepcopy(cities)
+    
+    distClosestVoisin = math.inf
+    i = 0
+    for i in range(len(cities)-1):
+        for j in range(i+1,len(cities)):
+            if distance(clonCities[i],clonCities[j]) < distClosestVoisin:
+                distClosestVoisin = distance(cities[i],cities[j])
+                index_closest = j
+                
+        clonCities[i+1],clonCities[index_closest]=clonCities[index_closest],clonCities[i+1]    
+        
+    total_dist = total_distance(clonCities)
+    return total_dist,clonCities
+
+
+# Random search
+#shortestDist,bestPath = Random_search(cities,iteration)
+
+# Local 2opt search
+#shortestDist,bestPath = Local2Opt_search(cities)
+
+# Hill climbing
+#shortestDist,bestPath = HillClimbing(cities)
+
+
+choix = 0
+
+
+if (choix == 1):
+    shortestDist,bestPath = Random_search(cities,iteration)
+elif (choix == 2):
+    shortestDist,bestPath = Local2Opt_search(cities)
+elif (choix == 3):
+    shortestDist,bestPath = HillClimbing(cities)
+else:
+    shortestDist,bestPath = PlusProcheVoisin(cities)
+    
+    
+print (total_distance(cities))    
+    
 for i,city in enumerate(bestPath) : print(city.name, end=" . ")
 print("")
 print ('The shortest path is : ',shortestDist)
