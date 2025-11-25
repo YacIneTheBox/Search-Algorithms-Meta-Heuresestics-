@@ -164,7 +164,7 @@ def main_loop(cities):
         "s - Show total distance of the original order\n"
         "q - Quit\n"
     )
-
+    # comment 
     while True:
         print(menu)
         choice = input("Your choice: ").strip().lower()
