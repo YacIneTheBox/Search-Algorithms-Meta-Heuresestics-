@@ -263,6 +263,143 @@ def Tabu_Search(cities,max_iterations=1000,tabu_tenure=10,
     return best_distance,best
 
 
+def genetic_algorithm_simple(cities, start_city_name="Algiers",
+                             population_size=100, generations=500):
+    """Algorithme Génétique simplifié avec OX crossover"""
+    import random
+    import copy
+    
+    def fitness(route):
+        """Calcule le fitness avec protection contre les erreurs"""
+        if not route or None in route or len(route) != len(cities):
+            return 0.0
+        
+        dist = total_distance(route)
+        if dist == 0 or dist == float('inf'):
+            return 0.0
+        
+        return 1.0 / dist
+    
+    def create_population():
+        """Crée la population initiale"""
+        population = []
+        for _ in range(population_size):
+            ind = copy.deepcopy(cities)
+            random.shuffle(ind[1:])  # Shuffle tout sauf la première position
+            
+            # S'assurer que start_city est en première position
+            try:
+                idx = next(i for i, c in enumerate(ind) if c.name == start_city_name)
+                ind[0], ind[idx] = ind[idx], ind[0]
+            except StopIteration:
+                pass
+            
+            population.append(ind)
+        return population
+    
+    def ordered_crossover(parent1, parent2):
+        """OX Crossover - Ordered Crossover"""
+        size = len(parent1)
+        
+        # Choisir deux points de coupe (éviter position 0 = Alger)
+        start = random.randint(1, size - 2)
+        end = random.randint(start + 1, size)
+        
+        # Créer l'enfant
+        child = [None] * size
+        child[0] = parent1[0]  # Toujours garder Alger en première position
+        
+        # Copier le segment du parent1
+        child[start:end] = parent1[start:end]
+        
+        # Remplir avec parent2 dans l'ordre (sans doublons)
+        child_set = set(city.name for city in child if city is not None)
+        parent2_filtered = [city for city in parent2 if city.name not in child_set]
+        
+        # Remplir les positions vides
+        p2_idx = 0
+        for i in range(1, size):
+            if child[i] is None:
+                if p2_idx < len(parent2_filtered):
+                    child[i] = parent2_filtered[p2_idx]
+                    p2_idx += 1
+        
+        return child
+    
+    def mutate(individual):
+        """Mutation par swap (échange deux villes)"""
+        mutated = individual.copy()
+        if len(mutated) > 2:
+            i = random.randint(1, len(mutated) - 1)
+            j = random.randint(1, len(mutated) - 1)
+            mutated[i], mutated[j] = mutated[j], mutated[i]
+        return mutated
+    
+    # Initialisation
+    population = create_population()
+    
+    # Trouver le meilleur initial
+    best_ever = None
+    best_distance = float('inf')
+    
+    for ind in population:
+        dist = total_distance(ind)
+        if dist < best_distance:
+            best_ever = list(ind)
+            best_distance = dist
+    
+    # Évolution sur plusieurs générations
+    for gen in range(generations):
+        # Évaluer et trier la population
+        population_with_fitness = [(ind, fitness(ind)) for ind in population]
+        population_with_fitness = [p for p in population_with_fitness if p[1] > 0]  # Filtrer invalides
+        
+        if not population_with_fitness:
+            # Si toute la population est invalide, réinitialiser
+            population = create_population()
+            continue
+        
+        population_with_fitness.sort(key=lambda x: x[1], reverse=True)
+        population = [ind for ind, fit in population_with_fitness]
+        
+        # Mise à jour du meilleur
+        current_best = population[0]
+        current_dist = total_distance(current_best)
+        if current_dist < best_distance:
+            best_ever = list(current_best)
+            best_distance = current_dist
+        
+        # Élitisme : garder les 10% meilleurs
+        elite_size = max(2, population_size // 10)
+        new_population = population[:elite_size]
+        
+        # Créer la nouvelle génération
+        while len(new_population) < population_size:
+            # Sélection par tournoi (taille 3)
+            tournament1 = random.sample(population[:len(population)//2], min(3, len(population)//2))
+            tournament2 = random.sample(population[:len(population)//2], min(3, len(population)//2))
+            
+            parent1 = max(tournament1, key=fitness)
+            parent2 = max(tournament2, key=fitness)
+            
+            # Croisement (80% de chance)
+            if random.random() < 0.8:
+                child = ordered_crossover(parent1, parent2)
+            else:
+                child = parent1.copy()
+            
+            # Mutation (2% de chance)
+            if random.random() < 0.02:
+                child = mutate(child)
+            
+            new_population.append(child)
+        
+        # Garder seulement population_size individus
+        population = new_population[:population_size]
+    
+    return best_distance, best_ever
+
+
 def print_tour_info(dist, tour):
     print(f"Total distance: {dist:.3f} #######################################")
     print("Tour order:")
@@ -280,6 +417,7 @@ def main_loop(cities):
         "4 - Nearest Neighbor (Plus Proche Voisin)\n"
         "5 - Simulated_Annealing\n"
         "6 - Tabu_Search\n"
+        "7 - Genetic Search\n"
         "s - Show total distance of the original order\n"
         "q - Quit\n"
     )
@@ -294,8 +432,8 @@ def main_loop(cities):
             print(f"Original order total distance: {total_distance(cities):.3f}")
             continue
 
-        if choice not in ('1', '2', '3', '4','5','6'):
-            print("Invalid choice, please enter 1,2,3,4,5,s or q.")
+        if choice not in ('1', '2', '3', '4','5','6','7'):
+            print("Invalid choice, please enter 1,2,3,4,5,6,7,s or q.")
             continue
 
         if choice == '1':
@@ -321,6 +459,10 @@ def main_loop(cities):
         elif choice == "6":
             dist,tour = Tabu_Search(cities)
             print("Tabu Search results:")
+            print_tour_info(dist,tour)
+        elif choice == "7":
+            dist,tour = genetic_algorithm_simple(cities)
+            print("Genetic search results:")
             print_tour_info(dist,tour)
 
 
