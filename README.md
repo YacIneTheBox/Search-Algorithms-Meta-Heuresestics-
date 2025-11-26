@@ -39,6 +39,8 @@ Available options are:
 
     6 – Tabu Search.
 
+    7 - Genetic Search
+
     s – Show total distance of the original city order.
 
     q – Quit the program.
