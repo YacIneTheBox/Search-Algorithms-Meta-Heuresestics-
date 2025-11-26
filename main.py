@@ -146,21 +146,70 @@ def nearest_neighbor(cities, start_city_name="Algiers"):
 
     return total_distance(tour), tour
 
+
+
+
+def Simulated_Annealing(cities,inital_temp = 10000,
+                        min_temp = 1,cooling_rate = 0.95,
+                        iteration_per_temp=100):
+    if not cities:
+        return 0.0,[]
+    
+    cpCities = copy.deepcopy(cities)
+    
+    current_distance = total_distance(cpCities)
+    best = list(cpCities)
+    best_distance = current_distance
+
+    temp = inital_temp
+
+    while temp >= min_temp:
+        # Appliquer le 2opt pour perturbation
+        for _ in range (iteration_per_temp):
+            i = random.randint(1, len(cpCities)-2)
+            j = random.randint(i + 1, len(cpCities))
+
+            neighbor = cpCities[:i] + cpCities[i:j][::-1] + cpCities[j:]
+            neighbor_distance = total_distance(neighbor)
+
+            delta = neighbor_distance - current_distance
+
+            # si accepted proceed sinon une test une chance de se faire accepter 
+            if delta < 0:
+                cpCities = neighbor
+                current_distance = neighbor_distance
+
+                if current_distance < best_distance:
+                    best = list(cpCities)
+                    best_distance = current_distance
+
+            else:
+                acceptation_proba = math.exp(-delta / temp)
+                if random.random() < acceptation_proba:
+                    cpCities = neighbor
+                    current_distance = neighbor_distance
+
+        temp *= cooling_rate
+    
+    return best_distance,best
+
+
 def print_tour_info(dist, tour):
-    print(f"Total distance: {dist:.3f}")
+    print(f"Total distance: {dist:.3f} #######################################")
     print("Tour order:")
     for c in tour:
         print(c.name, end=" . ")
     print("\n")
 
 def main_loop(cities):
-    iterations = 10000
+    iterations = 10000 # pour random search
     menu = (
         "\nChoose algorithm (enter number) or 'q' to quit:\n"
         "1 - Random search\n"
         "2 - Local 2-OPT search\n"
         "3 - Hill Climbing\n"
         "4 - Nearest Neighbor (Plus Proche Voisin)\n"
+        "5 - Simulated_Annealing\n"
         "s - Show total distance of the original order\n"
         "q - Quit\n"
     )
@@ -175,8 +224,8 @@ def main_loop(cities):
             print(f"Original order total distance: {total_distance(cities):.3f}")
             continue
 
-        if choice not in ('1', '2', '3', '4'):
-            print("Invalid choice, please enter 1,2,3,4,s or q.")
+        if choice not in ('1', '2', '3', '4','5'):
+            print("Invalid choice, please enter 1,2,3,4,5,s or q.")
             continue
 
         if choice == '1':
@@ -195,6 +244,10 @@ def main_loop(cities):
             dist, tour = nearest_neighbor(cities)
             print("Nearest Neighbor result:")
             print_tour_info(dist, tour)
+        elif choice == '5':
+            dist,tour = Simulated_Annealing(cities)
+            print("Simulated_Annealing results:")
+            print_tour_info(dist,tour)
 
 if __name__ == "__main__":
     # change path if needed
