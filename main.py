@@ -3,6 +3,8 @@ import random
 import math
 import copy
 import sys
+from collections import deque
+
 
 class City:
     def __init__(self, name, lat, lon, x, y):
@@ -194,6 +196,73 @@ def Simulated_Annealing(cities,inital_temp = 10000,
     return best_distance,best
 
 
+def Tabu_Search(cities,max_iterations=1000,tabu_tenure=10,
+                neighborhood_size=50):
+    current = copy.deepcopy(cities)
+
+    current_distance = total_distance(current)
+    best = list(current)
+    best_distance = current_distance
+    
+    # list des movements interdits
+    tabu_list = deque(maxlen=tabu_tenure)
+
+    #Compteur iterations whithout upgrades
+    no_improve = 0
+    max_no_improve = 100
+
+    for iteration in range(max_iterations):
+
+        candidates = []
+
+        for _ in range (neighborhood_size):
+            i = random.randint(1,len(current)-2)
+            j = random.randint(i + 1,len(current))
+            
+            # verif si tabu
+            move = (i,j)
+            is_tabu = move in tabu_list or (j, i) in tabu_list
+
+            # generate Voisin
+            neighbor = current[:i] + current[i:j][::-1] + current[j:]
+            neighbor_distance = total_distance(neighbor)
+
+            # critere d'aspiration , accept si meilleurs que best global
+            aspiration = neighbor_distance < best_distance
+
+            # Ajouter le candidat si non tabou ou aspiration
+            if not is_tabu or aspiration:
+                candidates.append((neighbor_distance,neighbor,move))
+
+        if not candidates:
+            break
+
+        # choisisr le meilleurs boisin (meme si moins bon que currecnt)
+        candidates.sort(key=lambda x: x[0])
+        next_distance, next_solution,best_move  = candidates[0]
+
+        # Mettre a jour la soluc
+        current = next_solution
+        current_distance = next_distance
+
+        # ajouter le mov a la list taboue
+        tabu_list.append(best_move)
+
+        # Mettre a jour le meilleurs global
+        if current_distance < best_distance:
+            best = list(current)
+            best_distance = current_distance
+            no_improve = 0
+
+        else:
+            no_improve += 1
+
+        if no_improve >= max_no_improve:
+            break
+
+    return best_distance,best
+
+
 def print_tour_info(dist, tour):
     print(f"Total distance: {dist:.3f} #######################################")
     print("Tour order:")
@@ -210,6 +279,7 @@ def main_loop(cities):
         "3 - Hill Climbing\n"
         "4 - Nearest Neighbor (Plus Proche Voisin)\n"
         "5 - Simulated_Annealing\n"
+        "6 - Tabu_Search\n"
         "s - Show total distance of the original order\n"
         "q - Quit\n"
     )
@@ -224,7 +294,7 @@ def main_loop(cities):
             print(f"Original order total distance: {total_distance(cities):.3f}")
             continue
 
-        if choice not in ('1', '2', '3', '4','5'):
+        if choice not in ('1', '2', '3', '4','5','6'):
             print("Invalid choice, please enter 1,2,3,4,5,s or q.")
             continue
 
@@ -248,6 +318,11 @@ def main_loop(cities):
             dist,tour = Simulated_Annealing(cities)
             print("Simulated_Annealing results:")
             print_tour_info(dist,tour)
+        elif choice == "6":
+            dist,tour = Tabu_Search(cities)
+            print("Tabu Search results:")
+            print_tour_info(dist,tour)
+
 
 if __name__ == "__main__":
     # change path if needed
